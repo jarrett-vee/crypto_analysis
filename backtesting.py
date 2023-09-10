@@ -1,37 +1,42 @@
 import pandas as pd
 from sqlalchemy import create_engine
+from config import symbols, DATABASE_URL
 
-DATABASE_URL = "postgresql://postgres:admin@localhost:5432/crypto_data"
 engine = create_engine(DATABASE_URL)
+
+
+def process_signal(signal_df, is_buying, cash, position, investment_fraction):
+    for _, row in signal_df.iterrows():
+        if is_buying:
+            trade_investment = cash * investment_fraction
+            units_to_buy = trade_investment // row["price"]
+            cash -= units_to_buy * row["price"]
+            position += units_to_buy
+        else:
+            cash += position * row["price"]
+            position = 0
+    return cash, position
 
 
 def backtest_strategy(symbol, initial_capital, investment_fraction):
     # Load signals from the database
     buy_signals = pd.read_sql(
-        "SELECT * FROM buy_signals WHERE symbol = '{}'".format(symbol), engine
-    )
-    sell_signals = pd.read_sql(
-        "SELECT * FROM sell_signals WHERE symbol = '{}'".format(symbol), engine
-    )
+        f"SELECT * FROM buy_signals WHERE symbol = '{symbol}'", engine
+    ).sort_values(by="date")
 
-    buy_signals = buy_signals.sort_values(by="date")
-    sell_signals = sell_signals.sort_values(by="date")
+    sell_signals = pd.read_sql(
+        f"SELECT * FROM sell_signals WHERE symbol = '{symbol}'", engine
+    ).sort_values(by="date")
 
     cash = initial_capital
     position = 0
 
-    for _, row in buy_signals.iterrows():
-        # Calculate the amount to invest in this trade
-        trade_investment = cash * investment_fraction
-        # Buying as much as the trade investment allows
-        units_to_buy = trade_investment // row["price"]
-        cash -= units_to_buy * row["price"]
-        position += units_to_buy
-
-    for _, row in sell_signals.iterrows():
-        # Selling all our position from the respective buy signal
-        cash += position * row["price"]
-        position = 0
+    cash, position = process_signal(
+        buy_signals, True, cash, position, investment_fraction
+    )
+    cash, position = process_signal(
+        sell_signals, False, cash, position, investment_fraction
+    )
 
     # Final value of our portfolio
     total_value = cash + (
@@ -41,7 +46,6 @@ def backtest_strategy(symbol, initial_capital, investment_fraction):
 
 
 if __name__ == "__main__":
-    symbols = ["BTC/USDT", "ETH/USDT", "BNB/USDT", "XRP/USDT", "ADA/USDT"]
     initial_capital = 50000
     investment_fraction = 0.4
 

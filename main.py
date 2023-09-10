@@ -1,6 +1,5 @@
 import ccxt
 import psycopg2
-from datetime import datetime
 import time
 import pandas as pd
 from sqlalchemy import create_engine
@@ -10,8 +9,9 @@ from ta.utils import dropna
 from ta.volatility import BollingerBands
 from ta.momentum import RSIIndicator
 from ta.trend import MACD, SMAIndicator
+from config import symbols, DATABASE_URL
 
-DATABASE_URL = "postgresql://postgres:admin@localhost:5432/crypto_data"
+
 engine = create_engine(DATABASE_URL)
 
 exchange = ccxt.binanceus(
@@ -21,13 +21,6 @@ exchange = ccxt.binanceus(
         "enableRateLimit": True,
     }
 )
-
-symbols = ["BTC/USDT", "ETH/USDT", "BNB/USDT", "XRP/USDT", "ADA/USDT"]
-
-
-def convert_timestamp(timestamp_in_millis):
-    timestamp_in_seconds = timestamp_in_millis / 1000
-    return datetime.utcfromtimestamp(timestamp_in_seconds).strftime("%Y-%m-%d %H:%M:%S")
 
 
 def fetch_historical_data(symbol):
