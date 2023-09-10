@@ -4,14 +4,16 @@ A simple script for cryptocurrency trading. It has not been put into practice bu
 
 It includes components for fetching historical data, storing it in a PostgreSQL database, adding technical indicators, generating trading signals, and backtesting a trading strategy for various cryptocurrency pairs.
 
+It also utilizies dash to visualize the data.
+
 ## Prerequisites
 
-- Required Python libraries (ccxt, psycopg2, pandas, sqlalchemy, numpy, ta)
+- Required Python libraries (ccxt, pandas, sqlalchemy, numpy, ta, dash)
 
 You can install the necessary Python libraries using pip:
 
 ```
-pip install ccxt pandas sqlalchemy numpy ta
+pip install ccxt pandas sqlalchemy numpy ta dash
 ```
 
 It currently fetches info for BTC/USDT, ETH/USDT, BNB/USDT, XRP/USDT, and ADA/USDT. I used these as they had the most volume on binanceUS.
